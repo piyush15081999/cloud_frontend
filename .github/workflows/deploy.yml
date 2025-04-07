@@ -44,3 +44,4 @@ jobs:
             sudo systemctl restart nginx
             echo "✅ Frontend deployed and Nginx restarted."
           EOF
+
