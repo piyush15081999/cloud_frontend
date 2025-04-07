@@ -16,7 +16,8 @@ jobs:
       - name: 🛠️ Set Up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '22.13.1'
+
 
       - name: 📦 Install Dependencies
         run: npm install
@@ -33,15 +34,22 @@ jobs:
 
       - name: 📁 Upload React Build to EC2
         run: |
-          scp -r ./dist ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/react-app
+          scp -o StrictHostKeyChecking=no -r ./dist ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/react-app
 
       - name: 🚀 Deploy to Nginx Directory on EC2
         run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            echo "🧹 Cleaning old build..."
             sudo rm -rf /usr/share/nginx/html/react-app
-            sudo mv /tmp/react-app /usr/share/nginx/html/react-app
-            sudo chown -R nginx:nginx /usr/share/nginx/html/react-app
-            sudo systemctl restart nginx
-            echo "✅ Frontend deployed and Nginx restarted."
-          EOF
 
+            echo "📦 Moving new build to Nginx directory..."
+            sudo mv /tmp/react-app /usr/share/nginx/html/react-app
+
+            echo "🔐 Setting permissions..."
+            sudo chown -R nginx:nginx /usr/share/nginx/html/react-app
+
+            echo "🔄 Restarting Nginx..."
+            sudo systemctl restart nginx
+
+            echo "✅ React frontend deployed successfully!"
+          EOF
